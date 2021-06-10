@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from users.models import UserProfile
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from rest_framework.authtoken.models import Token
 
 # Serializers define the API representation.
@@ -18,6 +18,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 'style': {'input_type': 'password'}
             }
         }
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
     def update(self, instance, validated_data):
         instance.is_active = validated_data.pop('is_active', instance.is_active)
@@ -40,7 +48,10 @@ class AuthUserSerializer(serializers.ModelSerializer):
          read_only_fields = ('id', 'is_active', 'is_staff')
     
     def get_auth_token(self, obj):
-        token = Token.objects.create(user=obj)
+        if Token.objects.filter(user=obj).exists():
+            token = Token.objects.get(user=obj)
+        else:
+            token = Token.objects.create(user=obj)
         return token.key
 
 class EmptySerializer(serializers.Serializer):

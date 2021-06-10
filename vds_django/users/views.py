@@ -9,7 +9,7 @@ from rest_framework.settings import api_settings
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.core.exceptions import ImproperlyConfigured
 from rest_framework.decorators import action
 
@@ -66,7 +66,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         user = get_and_authenticate_user(**serializer.validated_data)
         data = AuthUserSerializer(user).data
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response({"data":data, "success":True, "message":"user logged in successfully"}, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):
         if not isinstance(self.serializer_classes, dict):
@@ -75,3 +75,8 @@ class AuthViewSet(viewsets.GenericViewSet):
         if self.action in self.serializer_classes.keys():
             return self.serializer_classes[self.action]
         return super().get_serializer_class()
+
+    @action(methods=['POST', ], detail=False)
+    def logout(self, request):
+        logout(request)
+        return Response({"data":[], "success":True, "message":"user logged out successfully"}, status=status.HTTP_200_OK)
