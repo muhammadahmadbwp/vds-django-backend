@@ -28,6 +28,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+        instance.name = validated_data.pop('name', instance.name)
+        instance.telephone = validated_data.pop('telephone', instance.telephone)
         instance.is_active = validated_data.pop('is_active', instance.is_active)
         instance.save()
         return instance

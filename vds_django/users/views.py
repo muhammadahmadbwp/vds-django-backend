@@ -16,8 +16,15 @@ from rest_framework.decorators import action
 class UserViewSet(viewsets.ViewSet):
     """Handle creating and updating profiles"""
 
-    def list(self, request):
+    def get_queryset(self, request):
         queryset = UserProfile.objects.all()
+        user = self.request.query_params.get('user', None)
+        if user == 'pending':
+            queryset = queryset.filter(is_active=False)
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset(request)
         serializer = UserProfileSerializer(queryset, many=True)
         data = serializer.data
         return Response({"data":data, "success":True, "message":"data found"}, status=status.HTTP_200_OK)
@@ -41,6 +48,12 @@ class UserViewSet(viewsets.ViewSet):
             return Response({"data":[], "success":False, "message":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
         data = serializer.data
         return Response({"data":data, "success":True, "message":"user activated successfully"}, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        queryset = UserProfile.objects.all().filter(pk=pk)
+        serializer = UserProfileSerializer(queryset, many=True)
+        data = serializer.data
+        return Response({"data":data, "success":True, "message":"user data found"}, status=status.HTTP_200_OK)
 
 def get_and_authenticate_user(email, password):
     user = authenticate(username=email, password=password)
